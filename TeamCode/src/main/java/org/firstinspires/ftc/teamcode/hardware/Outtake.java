@@ -47,7 +47,7 @@ public class Outtake extends Subsystem {
         motorOuttakeRight = new MotorEx("outtakeRight");
         motorOuttakeLeft = new MotorEx("outtakeLeft");
 
-        motorOuttakeLeft.reverse();
+       // motorOuttakeLeft.reverse();
         motorOuttakeRight.reverse();
 
         outtakeGroup = new MotorGroup(motorOuttakeLeft, motorOuttakeRight);

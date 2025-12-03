@@ -15,13 +15,13 @@ import org.firstinspires.ftc.teamcode.hardware.Outtake;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
 
 @Config
-@TeleOp(name = "YeshivaLeague2026TestTeleop", group = "Teleop")
+@TeleOp(name = "13475Teleop", group = "Teleop")
 public class Teleop extends NextFTCOpMode {
 
     public Command driverControlled;
 
     public Teleop() {
-        super(DriveTrain.INSTANCE, Intake.INSTANCE, Outtake.INSTANCE, Transfer.INSTANCE);
+        super( Outtake.INSTANCE, DriveTrain.INSTANCE, Intake.INSTANCE, Transfer.INSTANCE);
     }
 
     private GamepadEx gp1;
@@ -43,11 +43,19 @@ public class Teleop extends NextFTCOpMode {
 
         gp1.getX().setPressedCommand(() -> Transfer.INSTANCE.transferBall());
 
+        gp1.getDpadUp().setHeldCommand(() -> Transfer.INSTANCE.rotateUp());
+
+        gp1.getDpadDown().setHeldCommand(() -> Transfer.INSTANCE.rotateDown());
+
 
     }
 
     @Override
     public void onUpdate() {
+        telemetry.addData("Motor Outtake Left Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentLeftVelocity());
+        telemetry.addData("Motor Outtake Right Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentRightVelocity());
+        telemetry.addData("Servo position: ", Transfer.INSTANCE.protector.getPosition());
+        telemetry.update();
 
     }
 }

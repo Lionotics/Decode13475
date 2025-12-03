@@ -16,17 +16,22 @@ public class Transfer extends Subsystem {
 
     public Servo protector;
 
-    public  static double liftRightPosition1 = 0.1;
-    public  static double liftLeftPosition1 = 0.1;
+    public  static double liftRightPosition1 = 0;
 
-    public  static double protectorPosition1 = 0.7;
-    public  static double liftRightPosition2 = 0.8;
-    public  static double liftLeftPosition2 = 0.8;
-    public  static double protectorPosition2 = 0.4;
+    public  static double liftRightPosition2 = 1;
+
+    public  static double liftLeftPosition1 = 1;
+    public  static double liftLeftPosition2 = 0;
+
+
+    public  static double protectorPosition1 = 0.63;
+    public  static double protectorPosition2 = 0.97;
 
     public  static  double protectorDelaySeconds = 0.4;
 
     public  static  double liftDelaySeconds = 0.4;
+
+    public static double rotatorStep = 0.01;
 
 
     private  Transfer() {}
@@ -59,7 +64,7 @@ public class Transfer extends Subsystem {
         return new SequentialGroup(
                 new InstantCommand(() -> protector.setPosition(protectorPosition2)),
                 new Delay(protectorDelaySeconds),
-                new InstantCommand(() -> liftRight.setPosition(liftRightPosition1)),
+                new InstantCommand(() -> liftRight.setPosition(liftRightPosition2)),
                 new InstantCommand(() -> liftLeft.setPosition(liftLeftPosition2)),
 
                 new Delay(liftDelaySeconds),
@@ -67,6 +72,17 @@ public class Transfer extends Subsystem {
         );
     }
 
+    public InstantCommand rotateUp() {
+        return new InstantCommand(()-> {
+            protector.setPosition( protector.getPosition() + rotatorStep );
+        });
+    }
+
+    public InstantCommand rotateDown() {
+        return new InstantCommand(()-> {
+            protector.setPosition( protector.getPosition() - rotatorStep );
+        });
+    }
 
 
 
