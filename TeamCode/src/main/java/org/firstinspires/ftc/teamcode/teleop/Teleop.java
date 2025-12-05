@@ -4,15 +4,19 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.rowanmcalpin.nextftc.core.command.Command;
+import com.rowanmcalpin.nextftc.core.command.utility.NullCommand;
 import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadEx;
 
 import com.rowanmcalpin.nextftc.ftc.NextFTCOpMode;
+import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadManager;
 
 import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Outtake;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
+import kotlin.jvm.functions.Function1;
 
 @Config
 @TeleOp(name = "13475Teleop", group = "Teleop")
@@ -34,18 +38,40 @@ public class Teleop extends NextFTCOpMode {
         GamepadEx gp1 = gamepadManager.getGamepad1();
         GamepadEx gp2 = gamepadManager.getGamepad2();
 
-        gp1.getRightBumper().setPressedCommand(() -> Intake.INSTANCE.eat());
-        gp1.getLeftBumper().setPressedCommand(() -> Intake.INSTANCE.spit());
+        gp1.getX().setPressedCommand(() -> Intake.INSTANCE.eat());
+
+        gp1.getRightBumper().setPressedCommand(() -> Intake.INSTANCE.spit());
+
 
         gp1.getA().setPressedCommand(() -> Outtake.INSTANCE.startMotor());
 
+
         gp1.getB().setPressedCommand(() -> Outtake.INSTANCE.stopMotor());
 
-        gp1.getX().setPressedCommand(() -> Transfer.INSTANCE.transferBall());
 
-        gp1.getDpadUp().setHeldCommand(() -> Transfer.INSTANCE.rotateUp());
 
-        gp1.getDpadDown().setHeldCommand(() -> Transfer.INSTANCE.rotateDown());
+       /* gp1.getRightTrigger().setPressedCommand(value -> {
+            // value is the analog trigger value (0.0–1.0); you can ignore it
+            Outtake.INSTANCE.startMotor();   // side effect
+            return new NullCommand();        // schedules a do-nothing command
+        });
+
+        gp1.getLeftTrigger().setPressedCommand(value -> {
+            // value is the analog trigger value (0.0–1.0); you can ignore it
+            Outtake.INSTANCE.stopMotor();   // side effect
+            return new NullCommand();        // schedules a do-nothing command
+        }); */
+
+
+
+        gp1.getLeftBumper().setPressedCommand(() -> Transfer.INSTANCE.transferBall());
+
+
+        gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
+        gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
+
+
+
 
 
     }
@@ -54,7 +80,8 @@ public class Teleop extends NextFTCOpMode {
     public void onUpdate() {
         telemetry.addData("Motor Outtake Left Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentLeftVelocity());
         telemetry.addData("Motor Outtake Right Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentRightVelocity());
-        telemetry.addData("Servo position: ", Transfer.INSTANCE.protector.getPosition());
+        telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocity);
+
         telemetry.update();
 
     }

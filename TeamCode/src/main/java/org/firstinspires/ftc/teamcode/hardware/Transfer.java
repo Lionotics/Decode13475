@@ -16,12 +16,10 @@ public class Transfer extends Subsystem {
 
     public Servo protector;
 
-    public  static double liftRightPosition1 = 0;
 
-    public  static double liftRightPosition2 = 1;
+    public  static double liftRightSpeed = -0.9;
 
-    public  static double liftLeftPosition1 = 1;
-    public  static double liftLeftPosition2 = 0;
+    public  static double liftLeftSpeed = 0.9;
 
 
     public  static double protectorPosition1 = 0.63;
@@ -32,6 +30,8 @@ public class Transfer extends Subsystem {
     public  static  double liftDelaySeconds = 0.4;
 
     public static double rotatorStep = 0.01;
+
+    public boolean protectorInDefault = true;
 
 
     private  Transfer() {}
@@ -46,43 +46,51 @@ public class Transfer extends Subsystem {
         liftLeft = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "liftLeft");
         protector = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "Protector");
 
-        liftRight.setPosition(liftRightPosition1);
-        liftLeft.setPosition(liftLeftPosition1);
+        liftRight.setPosition(0.5);
+        liftLeft.setPosition(0.5);
         protector.setPosition(protectorPosition1);
+
+        protectorInDefault = true;
+        goToDefault();
+
     }
 
-    public InstantCommand goToDefaultPosition() {
+    public InstantCommand goToDefault() {
         return new InstantCommand(()-> {
-            liftRight.setPosition(liftRightPosition1);
-            liftLeft.setPosition(liftLeftPosition1);
+            liftRight.setPosition(0.5);
+            liftLeft.setPosition(0.5);
             protector.setPosition(protectorPosition1);
         });
     }
 
     public Command transferBall() {
         // protector moves, wait, then kicker moves
-        return new SequentialGroup(
-                new InstantCommand(() -> protector.setPosition(protectorPosition2)),
-                new Delay(protectorDelaySeconds),
-                new InstantCommand(() -> liftRight.setPosition(liftRightPosition2)),
-                new InstantCommand(() -> liftLeft.setPosition(liftLeftPosition2)),
+        if (protectorInDefault) {
+            protectorInDefault = false;
+            return new SequentialGroup(
+                    new InstantCommand(() -> protector.setPosition(protectorPosition2)),
+                    new Delay(protectorDelaySeconds),
+                    new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
+                    new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed))
 
-                new Delay(liftDelaySeconds),
-                goToDefaultPosition()
-        );
+                    // I want to make the servos continousally move until manually instructed not to
+
+            );
+        } else {
+            protectorInDefault = true;
+            return new SequentialGroup(
+                    new Delay(liftDelaySeconds),
+                   goToDefault()
+
+                    // I want to make the servo stop moving
+
+            );
+        }
     }
 
-    public InstantCommand rotateUp() {
-        return new InstantCommand(()-> {
-            protector.setPosition( protector.getPosition() + rotatorStep );
-        });
-    }
 
-    public InstantCommand rotateDown() {
-        return new InstantCommand(()-> {
-            protector.setPosition( protector.getPosition() - rotatorStep );
-        });
-    }
+
+
 
 
 

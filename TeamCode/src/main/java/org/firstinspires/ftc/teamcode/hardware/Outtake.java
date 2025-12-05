@@ -16,12 +16,14 @@ public class Outtake extends Subsystem {
 
     public  static double motorPower = 0.5;
 
+    public  static double motorVelocityStep = 1;
+
     public  static  double kP = 0.01;
     public  static  double kI = 0.00;
     public  static  double kD = 0.00;
 
 
-    public  static double motorVelocity = 60;
+    public  static double motorVelocity = 800;
 
 
     private final PIDFController outtakeVelocityController = new PIDFController(
@@ -62,8 +64,12 @@ public class Outtake extends Subsystem {
         });
     }
 
+    public double targetVelocityToActualVelocity(double targetVelocity) {
+        return  0.0418 * targetVelocity + 5;
+    }
+
     public Command startMotor() {
-        double targetTemp  = motorVelocity; // ignore direction
+        double targetTemp  = targetVelocityToActualVelocity(motorVelocity); // ignore direction
 
 
         return new RunToVelocity(
@@ -80,6 +86,19 @@ public class Outtake extends Subsystem {
             outtakeGroup.setPower(0);
         });
     }
+
+    public Command raiseMotorVelocity() {
+        return new InstantCommand(() -> {
+            motorVelocity += motorVelocityStep;
+        });
+    }
+
+    public Command lowerMotorVelocity() {
+        return new InstantCommand(() -> {
+            motorVelocity -= motorVelocityStep;
+        });
+    }
+
 
     public  double getMotorCurrentLeftVelocity() {
         return motorOuttakeLeft.getVelocity();

@@ -6,34 +6,45 @@ import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.delays.Delay;
 import com.rowanmcalpin.nextftc.ftc.hardware.controllables.MotorEx;
+import com.rowanmcalpin.nextftc.ftc.hardware.controllables.MotorGroup;
 
 public class Intake extends Subsystem {
 
 
-    public MotorEx motor;
+    public MotorEx intakeRight;
+    public MotorEx intakeLeft;
+
+    public  MotorGroup intakeMotors;
+
 
     private Intake() {
 
     }
 
     public void initialize() {
-        motor = new MotorEx("Intake");
+
+        intakeRight = new MotorEx("intakeRight");
+        intakeLeft = new MotorEx("intakeLeft");
+        intakeLeft.reverse();
+
+        intakeMotors  = new MotorGroup(intakeRight, intakeLeft);
+
     }
 
     public static Intake INSTANCE = new Intake();
 
     public InstantCommand setPowerToIntake(double i) {
         return new InstantCommand(()-> {
-            motor.setPower(i);
+            intakeMotors.setPower(i);
         });
     }
 
     public InstantCommand eat() {
         return new InstantCommand(()-> {
-            if (motor.getPower() != 0) {
-                motor.setPower(0);
+            if (intakeRight.getPower() != 0) {
+                intakeMotors.setPower(0);
             } else {
-                motor.setPower(-1);
+                intakeMotors.setPower(-1);
 
             }
         });
@@ -41,10 +52,10 @@ public class Intake extends Subsystem {
 
     public InstantCommand spit() {
         return new InstantCommand(()-> {
-            if (motor.getPower() != 0) {
-                motor.setPower(0);
+            if (intakeRight.getPower() != 0) {
+                intakeMotors.setPower(0);
             } else {
-                motor.setPower(1);
+                intakeMotors.setPower(1);
 
             }
         });
@@ -52,9 +63,9 @@ public class Intake extends Subsystem {
 
     public Command loadBall( double loadDelaySecond ) {
         return new SequentialGroup(
-                new InstantCommand(() -> motor.setPower(-1) ),
+                new InstantCommand(() -> intakeMotors.setPower(-1) ),
                 new Delay(loadDelaySecond),
-                new InstantCommand(() ->  motor.setPower(0) )
+                new InstantCommand(() ->  intakeMotors.setPower(0) )
 
         );
 

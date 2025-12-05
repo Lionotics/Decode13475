@@ -30,15 +30,15 @@ public class DriveTrain extends Subsystem {
     private IMU imu;
 
     public void initialize() {
-      //  frontLeft = new MotorEx("frontLeft");
-       // frontRight = new MotorEx("frontRight");
-       // backLeft = new MotorEx("backLeft");
-       // backRight = new MotorEx("backRight");
+       frontLeft = new MotorEx("frontLeft");
+        frontRight = new MotorEx("frontRight");
+        backLeft = new MotorEx("backLeft");
+        backRight = new MotorEx("backRight");
 
-        frontLeft = new MotorEx("backLeft");
-        frontRight = new MotorEx("backRight");
-        backLeft = new MotorEx("frontLeft");
-        backRight = new MotorEx("frontRight");
+        //frontLeft = new MotorEx("backLeft");
+       // frontRight = new MotorEx("backRight");
+       // backLeft = new MotorEx("frontLeft");
+       // backRight = new MotorEx("frontRight");
 
 
         frontLeft.reverse();
