@@ -6,6 +6,7 @@ import com.rowanmcalpin.nextftc.core.Subsystem;
 import com.rowanmcalpin.nextftc.core.command.Command;
 import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
+import com.rowanmcalpin.nextftc.core.command.utility.NullCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.delays.Delay;
 import com.rowanmcalpin.nextftc.ftc.OpModeData;
 
@@ -27,11 +28,12 @@ public class Transfer extends Subsystem {
 
     public  static  double protectorDelaySeconds = 0.4;
 
-    public  static  double liftDelaySeconds = 0.4;
+    public static double shooterVelocityTolerance = 20;   // ticks/sec,
+
 
     public static double rotatorStep = 0.01;
 
-    public boolean protectorInDefault = true;
+    public  boolean transferedEnabled = false;
 
 
     private  Transfer() {}
@@ -50,7 +52,7 @@ public class Transfer extends Subsystem {
         liftLeft.setPosition(0.5);
         protector.setPosition(protectorPosition1);
 
-        protectorInDefault = true;
+        transferedEnabled = false;
         goToDefault();
 
     }
@@ -65,21 +67,19 @@ public class Transfer extends Subsystem {
 
     public Command transferBall() {
         // protector moves, wait, then kicker moves
-        if (protectorInDefault) {
-            protectorInDefault = false;
+        if (!transferedEnabled) {
+            transferedEnabled = true;
             return new SequentialGroup(
                     new InstantCommand(() -> protector.setPosition(protectorPosition2)),
-                    new Delay(protectorDelaySeconds),
-                    new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
-                    new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed))
+                    new Delay(protectorDelaySeconds)
+
 
                     // I want to make the servos continousally move until manually instructed not to
 
             );
         } else {
-            protectorInDefault = true;
+            transferedEnabled = false;
             return new SequentialGroup(
-                    new Delay(liftDelaySeconds),
                    goToDefault()
 
                     // I want to make the servo stop moving
@@ -87,6 +87,25 @@ public class Transfer extends Subsystem {
             );
         }
     }
+
+    public Command updateWheelSpeed() {
+        if (transferedEnabled) {
+            if (Outtake.INSTANCE.getMotorCurrentLeftVelocity() + shooterVelocityTolerance < Outtake.motorVelocityCurrent &&  liftRight.getPosition() != 0.5) {
+                new SequentialGroup(
+                        new InstantCommand(() -> liftRight.setPosition(0.5)),
+                        new InstantCommand(() -> liftLeft.setPosition(0.5))
+                );
+            } else if (Outtake.INSTANCE.getMotorCurrentLeftVelocity() + shooterVelocityTolerance >= Outtake.motorVelocityCurrent &&  liftRight.getPosition() != liftRightSpeed)  {
+                new SequentialGroup(
+                        new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
+                        new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed))
+                );
+            }
+        }
+        return new NullCommand();
+
+    }
+
 
 
 

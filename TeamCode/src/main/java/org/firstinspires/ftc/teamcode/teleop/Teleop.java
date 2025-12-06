@@ -4,19 +4,15 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.rowanmcalpin.nextftc.core.command.Command;
-import com.rowanmcalpin.nextftc.core.command.utility.NullCommand;
 import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadEx;
 
 import com.rowanmcalpin.nextftc.ftc.NextFTCOpMode;
-import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadManager;
 
 import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Outtake;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
-import kotlin.jvm.functions.Function1;
 
 @Config
 @TeleOp(name = "13475Teleop", group = "Teleop")
@@ -41,6 +37,8 @@ public class Teleop extends NextFTCOpMode {
         gp1.getX().setPressedCommand(() -> Intake.INSTANCE.eat());
 
         gp1.getRightBumper().setPressedCommand(() -> Intake.INSTANCE.spit());
+
+
 
 
         gp1.getA().setPressedCommand(() -> Outtake.INSTANCE.startMotor());
@@ -78,9 +76,11 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
+        Transfer.INSTANCE.updateWheelSpeed();
+
         telemetry.addData("Motor Outtake Left Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentLeftVelocity());
         telemetry.addData("Motor Outtake Right Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentRightVelocity());
-        telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocity);
+        telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocityCurrent);
 
         telemetry.update();
 

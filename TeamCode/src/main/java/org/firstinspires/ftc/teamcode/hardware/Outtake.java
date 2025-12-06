@@ -18,12 +18,21 @@ public class Outtake extends Subsystem {
 
     public  static double motorVelocityStep = 1;
 
-    public  static  double kP = 0.01;
+    public  static  double kP = 0.06;
     public  static  double kI = 0.00;
-    public  static  double kD = 0.00;
+    public  static  double kD = 0.002;
 
 
-    public  static double motorVelocity = 800;
+
+    public  static double motorVelocityTargetLower = 770;
+    public  static double motorVelocityTargetHigher = 875;
+
+    public  static double motorVelocityCurrent = motorVelocityTargetHigher;
+
+    public  static  boolean motorIsOnHigher = true;
+
+
+
 
 
     private final PIDFController outtakeVelocityController = new PIDFController(
@@ -65,11 +74,12 @@ public class Outtake extends Subsystem {
     }
 
     public double targetVelocityToActualVelocity(double targetVelocity) {
-        return  0.0418 * targetVelocity + 5;
+        return  -targetVelocity;
+        //return  0.0418 * targetVelocity + 5;
     }
 
     public Command startMotor() {
-        double targetTemp  = targetVelocityToActualVelocity(motorVelocity); // ignore direction
+        double targetTemp  = targetVelocityToActualVelocity(motorVelocityCurrent); // ignore direction
 
 
         return new RunToVelocity(
@@ -89,15 +99,36 @@ public class Outtake extends Subsystem {
 
     public Command raiseMotorVelocity() {
         return new InstantCommand(() -> {
-            motorVelocity += motorVelocityStep;
+            motorVelocityCurrent += motorVelocityStep;
         });
     }
 
     public Command lowerMotorVelocity() {
         return new InstantCommand(() -> {
-            motorVelocity -= motorVelocityStep;
+            motorVelocityCurrent -= motorVelocityStep;
         });
     }
+
+
+    public Command MotorVelocityToHigher() {
+        return new InstantCommand(() -> {
+            if (!motorIsOnHigher) {
+                motorVelocityTargetLower = motorVelocityCurrent;
+                motorVelocityCurrent = motorVelocityTargetHigher;
+                motorIsOnHigher = true;
+            }
+        });
+    };
+
+    public Command MotorVelocityToLower() {
+        return new InstantCommand(() -> {
+            if (motorIsOnHigher) {
+                motorVelocityTargetHigher = motorVelocityCurrent;
+                motorVelocityCurrent = motorVelocityTargetLower;
+                motorIsOnHigher = false;
+            }
+        });
+    };
 
 
     public  double getMotorCurrentLeftVelocity() {
