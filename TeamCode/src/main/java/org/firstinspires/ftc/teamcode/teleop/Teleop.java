@@ -29,23 +29,31 @@ public class Teleop extends NextFTCOpMode {
     @Override
     public void onStartButtonPressed() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        driverControlled = DriveTrain.INSTANCE.Drive(gamepadManager.getGamepad1(), false);
+
+        driverControlled = DriveTrain.INSTANCE.Drive(gamepadManager.getGamepad1(), true);
         driverControlled.invoke();
+
+
+
+
         GamepadEx gp1 = gamepadManager.getGamepad1();
-        GamepadEx gp2 = gamepadManager.getGamepad2();
 
         gp1.getX().setPressedCommand(() -> Intake.INSTANCE.eat());
+
 
         gp1.getRightBumper().setPressedCommand(() -> Intake.INSTANCE.spit());
 
 
+
+        gp1.getDpadLeft().setPressedCommand( ()->Outtake.INSTANCE.MotorVelocityToLower() );
+
+        gp1.getDpadRight().setPressedCommand( ()->Outtake.INSTANCE.MotorVelocityToHigher() );
 
 
         gp1.getA().setPressedCommand(() -> Outtake.INSTANCE.startMotor());
 
 
         gp1.getB().setPressedCommand(() -> Outtake.INSTANCE.stopMotor());
-
 
 
        /* gp1.getRightTrigger().setPressedCommand(value -> {
@@ -63,9 +71,8 @@ public class Teleop extends NextFTCOpMode {
 
 
         gp1.getLeftBumper().setPressedCommand(() -> Transfer.INSTANCE.transferBall());
+      gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
 
-
-        gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
         gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
 
 
@@ -76,11 +83,17 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-        Transfer.INSTANCE.updateWheelSpeed();
+
+        Transfer.INSTANCE.updateWheelSpeed().invoke();
 
         telemetry.addData("Motor Outtake Left Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentLeftVelocity());
         telemetry.addData("Motor Outtake Right Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentRightVelocity());
-        telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocityCurrent);
+        telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocityTarget);
+        telemetry.addData("Motor Velocity Is Higher (true if Higher, false if Lower): ",  Outtake.motorIsOnHigher);
+        telemetry.addData("Is transfer enabled: ", Transfer.INSTANCE.transferedEnabled );
+        telemetry.addData("Is this getting called: ", Transfer.INSTANCE.isThisGettingCalled );
+
+
 
         telemetry.update();
 

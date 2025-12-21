@@ -35,10 +35,10 @@ public class DriveTrain extends Subsystem {
         backLeft = new MotorEx("backLeft");
         backRight = new MotorEx("backRight");
 
-        //frontLeft = new MotorEx("backLeft");
-       // frontRight = new MotorEx("backRight");
-       // backLeft = new MotorEx("frontLeft");
-       // backRight = new MotorEx("frontRight");
+        //frontLeft = new MotorEx("frontRight");
+        //frontRight = new MotorEx("frontLeft");
+       // backLeft = new MotorEx("backRight");
+       // backRight = new MotorEx("backLeft");
 
 
         frontLeft.reverse();

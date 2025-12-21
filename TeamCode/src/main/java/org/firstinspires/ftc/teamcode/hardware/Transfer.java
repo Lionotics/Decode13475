@@ -22,13 +22,14 @@ public class Transfer extends Subsystem {
 
     public  static double liftLeftSpeed = 0.9;
 
+    public  double isThisGettingCalled = 0;
 
     public  static double protectorPosition1 = 0.63;
     public  static double protectorPosition2 = 0.97;
 
     public  static  double protectorDelaySeconds = 0.4;
 
-    public static double shooterVelocityTolerance = 20;   // ticks/sec,
+    public static double shooterVelocityTolerance = 30;   // ticks/sec,
 
 
     public static double rotatorStep = 0.01;
@@ -89,19 +90,29 @@ public class Transfer extends Subsystem {
     }
 
     public Command updateWheelSpeed() {
+
+
         if (transferedEnabled) {
-            if (Outtake.INSTANCE.getMotorCurrentLeftVelocity() + shooterVelocityTolerance < Outtake.motorVelocityCurrent &&  liftRight.getPosition() != 0.5) {
-                new SequentialGroup(
+            if (  Math.abs( ( Outtake.INSTANCE.getMotorCurrentLeftVelocity() + Outtake.INSTANCE.getMotorCurrentRightVelocity() )/2 - Outtake.motorVelocityTarget) <= shooterVelocityTolerance &&  liftRight.getPosition() != 0.5) {
+               return new SequentialGroup(
                         new InstantCommand(() -> liftRight.setPosition(0.5)),
-                        new InstantCommand(() -> liftLeft.setPosition(0.5))
-                );
-            } else if (Outtake.INSTANCE.getMotorCurrentLeftVelocity() + shooterVelocityTolerance >= Outtake.motorVelocityCurrent &&  liftRight.getPosition() != liftRightSpeed)  {
-                new SequentialGroup(
+                        new InstantCommand(() -> liftLeft.setPosition(0.5)),
+                        new InstantCommand( ()-> Intake.INSTANCE.intakeMotors.setPower(0))
+               );
+
+            } else if ( Math.abs( (Outtake.INSTANCE.getMotorCurrentRightVelocity() + Outtake.INSTANCE.getMotorCurrentLeftVelocity())/2  -  Outtake.motorVelocityTarget)  >= shooterVelocityTolerance &&  liftRight.getPosition() != liftRightSpeed)  {
+               return new SequentialGroup(
                         new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
-                        new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed))
-                );
+                        new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed)),
+                       new InstantCommand(()->  Intake.INSTANCE.intakeMotors.setPower(1))
+
+               );
             }
         }
+
+
+
+
         return new NullCommand();
 
     }

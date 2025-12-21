@@ -71,6 +71,10 @@ public class Intake extends Subsystem {
 
     }
 
+    public double getMotorsVelocity() {
+        return intakeRight.getPower();
+    }
+
 
 
 
