@@ -83,18 +83,13 @@ public class Teleop extends NextFTCOpMode {
 
     @Override
     public void onUpdate() {
-
         Transfer.INSTANCE.updateWheelSpeed().invoke();
-
         telemetry.addData("Motor Outtake Left Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentLeftVelocity());
         telemetry.addData("Motor Outtake Right Current Velocity: ",  Outtake.INSTANCE.getMotorCurrentRightVelocity());
         telemetry.addData("Motor Outtake Target Velocity: ",  Outtake.motorVelocityTarget);
         telemetry.addData("Motor Velocity Is Higher (true if Higher, false if Lower): ",  Outtake.motorIsOnHigher);
         telemetry.addData("Is transfer enabled: ", Transfer.INSTANCE.transferedEnabled );
         telemetry.addData("Is this getting called: ", Transfer.INSTANCE.isThisGettingCalled );
-
-
-
         telemetry.update();
 
     }
