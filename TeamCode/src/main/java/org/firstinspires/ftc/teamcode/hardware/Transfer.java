@@ -24,8 +24,11 @@ public class Transfer extends Subsystem {
 
     public  double isThisGettingCalled = 0;
 
-    public  static double protectorPosition1 = 0.63;
-    public  static double protectorPosition2 = 0.97;
+    public  static double protectorRightPosition1 = 0.63;
+    public  static double protectorRightPosition2 = 0.97;
+
+    public  static double protectorLeftPosition1 = 0.03;
+    public  static double protectorLeftPosition2 = 0.03;
 
     public  static  double protectorDelaySeconds = 0.4;
 
@@ -53,8 +56,8 @@ public class Transfer extends Subsystem {
 
         liftRight.setPosition(0.5);
         liftLeft.setPosition(0.5);
-        protectorRight.setPosition(protectorPosition1);
-        protectorLeft.setPosition(protectorPosition1);
+        protectorRight.setPosition(protectorRightPosition1);
+        protectorLeft.setPosition(protectorLeftPosition1);
 
 
         transferedEnabled = false;
@@ -66,8 +69,8 @@ public class Transfer extends Subsystem {
         return new InstantCommand(()-> {
             liftRight.setPosition(0.5);
             liftLeft.setPosition(0.5);
-            protectorRight.setPosition(protectorPosition1);
-            protectorLeft.setPosition(protectorPosition1);
+            protectorRight.setPosition(protectorRightPosition1);
+            protectorLeft.setPosition(protectorLeftPosition1);
         });
     }
 
@@ -76,8 +79,8 @@ public class Transfer extends Subsystem {
         if (!transferedEnabled) {
             transferedEnabled = true;
             return new SequentialGroup(
-                    new InstantCommand(() -> protectorRight.setPosition(protectorPosition2)),
-                    new InstantCommand(() -> protectorLeft.setPosition(protectorPosition2)),
+                    new InstantCommand(() -> protectorRight.setPosition(protectorRightPosition2)),
+                    new InstantCommand(() -> protectorLeft.setPosition(protectorLeftPosition2)),
 
                     new Delay(protectorDelaySeconds)
 
@@ -111,17 +114,27 @@ public class Transfer extends Subsystem {
                return new SequentialGroup(
                         new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
                         new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed)),
-                       new InstantCommand(()->  Intake.INSTANCE.intakeMotors.setPower(1))
+                       new InstantCommand(()->  Intake.INSTANCE.intakeMotors.setPower(-1))
 
                );
             }
         }
 
 
-
-
         return new NullCommand();
 
+    }
+
+    public InstantCommand rotateUp() {
+        return new InstantCommand(()-> {
+            protectorLeft.setPosition( protectorLeft.getPosition() + rotatorStep );
+        });
+    }
+
+    public InstantCommand rotateDown() {
+        return new InstantCommand(()-> {
+            protectorLeft.setPosition( protectorLeft.getPosition() - rotatorStep );
+        });
     }
 
 

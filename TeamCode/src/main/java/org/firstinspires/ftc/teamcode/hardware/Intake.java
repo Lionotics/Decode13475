@@ -25,7 +25,8 @@ public class Intake extends Subsystem {
 
         intakeRight = new MotorEx("intakeRight");
         intakeLeft = new MotorEx("intakeLeft");
-        intakeLeft.reverse();
+
+        intakeRight.reverse();
 
         intakeMotors  = new MotorGroup(intakeRight, intakeLeft);
 

@@ -51,7 +51,7 @@ public class Teleop extends NextFTCOpMode {
 
 
 
-        gp1.getDpadLeft().setPressedCommand( ()->Outtake.INSTANCE.MotorVelocityToLower() );
+        gp1.getDpadLeft().setPressedCommand( ()->DriveTrain.INSTANCE.setPowerToWheelsOnceAtATime() );
 
         gp1.getDpadRight().setPressedCommand( ()->Outtake.INSTANCE.MotorVelocityToHigher() );
 
@@ -77,9 +77,11 @@ public class Teleop extends NextFTCOpMode {
 
 
         gp1.getLeftBumper().setPressedCommand(() -> Transfer.INSTANCE.transferBall());
-      gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
 
-        gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
+        //gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
+        //gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
+        gp1.getDpadUp().setHeldCommand( ()-> Transfer.INSTANCE.rotateUp() );
+        gp1.getDpadDown().setHeldCommand( ()-> Transfer.INSTANCE.rotateDown() );
 
 
     }
