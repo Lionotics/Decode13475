@@ -5,6 +5,7 @@ import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.zyxOrientation;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -29,6 +30,11 @@ public class DriveTrain extends Subsystem {
     private MotorEx[] motors;
     private IMU imu;
 
+    public GoBildaPinpointDriver odometryForward;
+    public GoBildaPinpointDriver odometrySideways;
+
+
+
     public void initialize() {
        frontLeft = new MotorEx("frontLeft");
         frontRight = new MotorEx("frontRight");
@@ -40,6 +46,10 @@ public class DriveTrain extends Subsystem {
        // backLeft = new MotorEx("backRight");
        // backRight = new MotorEx("backLeft");
 
+        odometryForward = OpModeData.INSTANCE.getHardwareMap().get(GoBildaPinpointDriver.class, "odometryForward");
+        odometrySideways = OpModeData.INSTANCE.getHardwareMap().get(GoBildaPinpointDriver.class, "odometrySideways");
+
+
 
         frontLeft.reverse();
         backLeft.reverse();
@@ -49,12 +59,21 @@ public class DriveTrain extends Subsystem {
         initIMU(OpModeData.INSTANCE.getHardwareMap());
     }
 
+
+
     public void initIMU(HardwareMap hwMap) {
         // Retrieve the IMU from the hardware map
         imu = hwMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
         imu.initialize(parameters);
         imu.resetYaw();
+
+
+        odometryForward.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odometryForward.resetPosAndIMU();
+
+        odometrySideways.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odometrySideways.resetPosAndIMU();
     }
 
     public Command Drive(GamepadEx gamepad, boolean robotOreinted) {

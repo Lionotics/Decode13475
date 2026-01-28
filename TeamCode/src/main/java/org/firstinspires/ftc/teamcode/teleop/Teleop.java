@@ -9,10 +9,14 @@ import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadEx;
 
 import com.rowanmcalpin.nextftc.ftc.NextFTCOpMode;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Outtake;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
+import org.firstinspires.ftc.teamcode.hardware.Webcam;
 
 @Config
 @TeleOp(name = "13475Teleop", group = "Teleop")
@@ -21,16 +25,18 @@ public class Teleop extends NextFTCOpMode {
     public Command driverControlled;
 
     public Teleop() {
-        super( Outtake.INSTANCE, DriveTrain.INSTANCE, Intake.INSTANCE, Transfer.INSTANCE);
+        super( Outtake.INSTANCE, DriveTrain.INSTANCE, Intake.INSTANCE, Transfer.INSTANCE, Webcam.INSTANCE);
     }
 
     private GamepadEx gp1;
 
     @Override
     public void onStartButtonPressed() {
+        FtcDashboard.getInstance().startCameraStream(Webcam.INSTANCE.getVisionPortal(), 30);
+
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        driverControlled = DriveTrain.INSTANCE.Drive(gamepadManager.getGamepad1(), true);
+        driverControlled = DriveTrain.INSTANCE.Drive(gamepadManager.getGamepad1(), false);
         driverControlled.invoke();
 
 
@@ -76,9 +82,6 @@ public class Teleop extends NextFTCOpMode {
         gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
 
 
-
-
-
     }
 
     @Override
@@ -90,7 +93,38 @@ public class Teleop extends NextFTCOpMode {
         telemetry.addData("Motor Velocity Is Higher (true if Higher, false if Lower): ",  Outtake.motorIsOnHigher);
         telemetry.addData("Is transfer enabled: ", Transfer.INSTANCE.transferedEnabled );
         telemetry.addData("Is this getting called: ", Transfer.INSTANCE.isThisGettingCalled );
+
+        if (DriveTrain.INSTANCE.odometryForward != null && DriveTrain.INSTANCE.odometrySideways != null) {
+            DriveTrain.INSTANCE.odometryForward.update(); // read sensors and update internal pose
+            DriveTrain.INSTANCE.odometrySideways.update();
+
+            Pose2D poseX2d = DriveTrain.INSTANCE.odometryForward.getPosition();
+            Pose2D poseY2d = DriveTrain.INSTANCE.odometrySideways.getPosition();
+
+
+            double xInches = poseX2d.getX(DistanceUnit.INCH);
+            double yInches = poseY2d.getY(DistanceUnit.INCH);
+            double headingDeg = poseX2d.getHeading(AngleUnit.DEGREES); // LATER NEED TO COMBINE BOTH ODOS TO GET DEGREE
+
+            telemetry.addData("Odo X (in)", xInches);
+            telemetry.addData("Odo Y (in)", yInches);
+            telemetry.addData("Odo Heading (deg)", headingDeg);
+        }
+
+        Webcam.INSTANCE.addTelemetry(telemetry);
+
         telemetry.update();
 
+
     }
+
+
+
+    @Override
+    public  void onStop() {
+        Webcam.INSTANCE.close();
+        FtcDashboard.getInstance().stopCameraStream();
+    }
+
+
 }

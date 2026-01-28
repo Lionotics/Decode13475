@@ -15,8 +15,8 @@ public class Transfer extends Subsystem {
     public Servo liftRight;
     public Servo liftLeft;
 
-    public Servo protector;
-
+    public Servo protectorRight;
+    public Servo protectorLeft;
 
     public  static double liftRightSpeed = -0.9;
 
@@ -47,11 +47,15 @@ public class Transfer extends Subsystem {
     public void initialize() {
         liftRight = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "liftRight");
         liftLeft = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "liftLeft");
-        protector = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "Protector");
+        protectorRight = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "protectorRight");
+        protectorLeft = OpModeData.INSTANCE.getHardwareMap().get(Servo.class, "protectorLeft");
+
 
         liftRight.setPosition(0.5);
         liftLeft.setPosition(0.5);
-        protector.setPosition(protectorPosition1);
+        protectorRight.setPosition(protectorPosition1);
+        protectorLeft.setPosition(protectorPosition1);
+
 
         transferedEnabled = false;
         goToDefault();
@@ -62,7 +66,8 @@ public class Transfer extends Subsystem {
         return new InstantCommand(()-> {
             liftRight.setPosition(0.5);
             liftLeft.setPosition(0.5);
-            protector.setPosition(protectorPosition1);
+            protectorRight.setPosition(protectorPosition1);
+            protectorLeft.setPosition(protectorPosition1);
         });
     }
 
@@ -71,7 +76,9 @@ public class Transfer extends Subsystem {
         if (!transferedEnabled) {
             transferedEnabled = true;
             return new SequentialGroup(
-                    new InstantCommand(() -> protector.setPosition(protectorPosition2)),
+                    new InstantCommand(() -> protectorRight.setPosition(protectorPosition2)),
+                    new InstantCommand(() -> protectorLeft.setPosition(protectorPosition2)),
+
                     new Delay(protectorDelaySeconds)
 
 
