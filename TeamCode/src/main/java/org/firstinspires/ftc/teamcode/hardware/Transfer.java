@@ -9,6 +9,7 @@ import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.NullCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.delays.Delay;
 import com.rowanmcalpin.nextftc.ftc.OpModeData;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
 public class Transfer extends Subsystem {
@@ -27,8 +28,8 @@ public class Transfer extends Subsystem {
     public  static double protectorRightPosition1 = 0.63;
     public  static double protectorRightPosition2 = 0.97;
 
-    public  static double protectorLeftPosition1 = 0.03;
-    public  static double protectorLeftPosition2 = 0.03;
+    public  static double protectorLeftPosition1 = 0.68;
+    public  static double protectorLeftPosition2 = 0.01;
 
     public  static  double protectorDelaySeconds = 0.4;
 
@@ -43,6 +44,19 @@ public class Transfer extends Subsystem {
     private  Transfer() {}
 
     public static Transfer INSTANCE = new Transfer();
+
+    public int ballsFired = 0;
+
+    public boolean previouslyFired = false;
+
+    public  enum  TRANSFER_MODE { START_SHOOTING, STOP_SHOOTING,  AUTO_MODE };
+
+
+
+    private final ElapsedTime shotTimer = new ElapsedTime();
+    private boolean isFiring = false;
+    public static double MIN_SHOT_INTERVAL_S = 0.30;
+    public static double POS_EPS = 0.02;
 
 
 
@@ -59,9 +73,11 @@ public class Transfer extends Subsystem {
         protectorRight.setPosition(protectorRightPosition1);
         protectorLeft.setPosition(protectorLeftPosition1);
 
-
+        previouslyFired = false;
+        ballsFired = 0;
         transferedEnabled = false;
         goToDefault();
+
 
     }
 
@@ -71,12 +87,23 @@ public class Transfer extends Subsystem {
             liftLeft.setPosition(0.5);
             protectorRight.setPosition(protectorRightPosition1);
             protectorLeft.setPosition(protectorLeftPosition1);
+            Intake.INSTANCE.intakeMotors.setPower(0);
+            Outtake.INSTANCE.stopMotor().invoke();
         });
     }
 
-    public Command transferBall() {
+    public Command transferBall(TRANSFER_MODE transferMode  ) {
         // protector moves, wait, then kicker moves
+        if (transferMode == TRANSFER_MODE.START_SHOOTING) {
+            transferedEnabled = false;
+        } else if (transferMode == TRANSFER_MODE.STOP_SHOOTING ) {
+            transferedEnabled = true;
+        }
+
+
         if (!transferedEnabled) {
+
+
             transferedEnabled = true;
             return new SequentialGroup(
                     new InstantCommand(() -> protectorRight.setPosition(protectorRightPosition2)),
@@ -99,30 +126,40 @@ public class Transfer extends Subsystem {
         }
     }
 
-    public Command updateWheelSpeed() {
+    private boolean near(double a, double b) { return Math.abs(a-b) < POS_EPS; }
 
+    public void updateWheelSpeedTick() {
+        if (!transferedEnabled) return;
 
-        if (transferedEnabled) {
-            if (  Math.abs( ( Outtake.INSTANCE.getMotorCurrentLeftVelocity() + Outtake.INSTANCE.getMotorCurrentRightVelocity() )/2 - Outtake.motorVelocityTarget) <= shooterVelocityTolerance &&  liftRight.getPosition() != 0.5) {
-               return new SequentialGroup(
-                        new InstantCommand(() -> liftRight.setPosition(0.5)),
-                        new InstantCommand(() -> liftLeft.setPosition(0.5)),
-                        new InstantCommand( ()-> Intake.INSTANCE.intakeMotors.setPower(0))
-               );
+        double v = Math.abs(Outtake.INSTANCE.getOuttakeGroupVelocity());
+        double target = Outtake.motorVelocityTarget;
+        boolean atSpeed = Math.abs(v - target) <= shooterVelocityTolerance;
 
-            } else if ( Math.abs( (Outtake.INSTANCE.getMotorCurrentRightVelocity() + Outtake.INSTANCE.getMotorCurrentLeftVelocity())/2  -  Outtake.motorVelocityTarget)  >= shooterVelocityTolerance &&  liftRight.getPosition() != liftRightSpeed)  {
-               return new SequentialGroup(
-                        new InstantCommand(() -> liftRight.setPosition(liftRightSpeed)),
-                        new InstantCommand(() -> liftLeft.setPosition(liftLeftSpeed)),
-                       new InstantCommand(()->  Intake.INSTANCE.intakeMotors.setPower(-1))
+        boolean liftRetracted = near(liftRight.getPosition(), 0.5);
+        boolean liftFired     = near(liftLeft.getPosition(), liftLeftSpeed); // or check both L/R
 
-               );
-            }
+        // Decide whether we *should* be firing
+        if (atSpeed && liftRetracted && !isFiring) {
+            // start a firing stroke
+            liftRight.setPosition(liftRightSpeed);
+            liftLeft.setPosition(liftLeftSpeed);
+            Intake.INSTANCE.intakeMotors.setPower(-1);
+            isFiring = true;
         }
 
+        // End of stroke → count exactly once, debounced
+        if (isFiring && liftFired) {
+            // retract (you can also delay here if needed)
+            liftRight.setPosition(0.5);
+            liftLeft.setPosition(0.5);
+            Intake.INSTANCE.intakeMotors.setPower(0);
 
-        return new NullCommand();
-
+            if (shotTimer.seconds() >= MIN_SHOT_INTERVAL_S) {
+                ballsFired++;
+                shotTimer.reset();
+            }
+            isFiring = false;
+        }
     }
 
     public InstantCommand rotateUp() {

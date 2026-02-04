@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.rowanmcalpin.nextftc.core.Subsystem;
 import com.rowanmcalpin.nextftc.core.command.Command;
+import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
 import com.rowanmcalpin.nextftc.core.control.controllers.PIDFController;
 import com.rowanmcalpin.nextftc.ftc.hardware.controllables.MotorEx;
@@ -97,12 +98,14 @@ public class Outtake extends Subsystem {
      //   return new InstantCommand(() -> {
        //     outtakeGroup.setPower(0);
        // });
-        return new RunToVelocity(
+
+       return  new RunToVelocity(
                 outtakeGroup,
                 0,
                 outtakeVelocityController,
                 this
-        );
+
+       );
     }
 
     public Command raiseMotorVelocity() {
@@ -146,6 +149,8 @@ public class Outtake extends Subsystem {
     public  double getMotorCurrentRightVelocity() {
         return -motorOuttakeRight.getVelocity();
     }
+
+    public  double getOuttakeGroupVelocity() { return  outtakeGroup.getVelocity(); }
 
 
 }
