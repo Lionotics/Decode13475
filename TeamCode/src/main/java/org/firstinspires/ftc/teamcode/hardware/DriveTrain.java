@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.hardware;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -26,6 +27,7 @@ import java.util.Collections;
 import java.util.Set;
 
 
+@Config
 public class DriveTrain extends Subsystem {
     public static final DriveTrain INSTANCE = new DriveTrain();
     private DriveTrain() {
@@ -71,7 +73,7 @@ public class DriveTrain extends Subsystem {
 
     // Tune these:
 
-    public static double desiredTilt = 0;
+    public static double desiredTilt = -4;
     public static double deadbandDeg = 2.0;
     public static long timeoutMs = 25000;
 
@@ -129,7 +131,7 @@ public class DriveTrain extends Subsystem {
         imu.resetYaw();
 
 
-        odometry.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.REVERSED, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odometry.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         odometry.resetPosAndIMU();
 
     }

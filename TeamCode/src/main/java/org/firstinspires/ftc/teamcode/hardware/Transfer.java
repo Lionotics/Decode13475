@@ -19,11 +19,9 @@ public class Transfer extends Subsystem {
     public Servo protectorRight;
     public Servo protectorLeft;
 
-    public  static double liftRightSpeed = -0.9;
+    public  static double liftRightSpeed = 0.1;
 
     public  static double liftLeftSpeed = 0.9;
-
-    public  double isThisGettingCalled = 0;
 
     public  static double protectorRightPosition1 = 0.63;
     public  static double protectorRightPosition2 = 0.97;
@@ -34,6 +32,8 @@ public class Transfer extends Subsystem {
     public  static  double protectorDelaySeconds = 0.4;
 
     public static double shooterVelocityTolerance = 30;   // ticks/sec,
+
+    public static  double shootingDelaySeconds = 1.25;
 
 
     public static double rotatorStep = 0.01;
@@ -53,10 +53,19 @@ public class Transfer extends Subsystem {
 
 
 
-    private final ElapsedTime shotTimer = new ElapsedTime();
     private boolean isFiring = false;
-    public static double MIN_SHOT_INTERVAL_S = 0.30;
+
+    private  boolean previousallyIncreamtedBallsFired = false;
+
     public static double POS_EPS = 0.02;
+
+
+    private final ElapsedTime atSpeedTimer = new ElapsedTime();
+    private boolean speedTimerRunning = false;
+
+    private boolean shotLatched = false; // blocks repeat shots while delayPassed stays true
+
+
 
 
 
@@ -77,6 +86,8 @@ public class Transfer extends Subsystem {
         ballsFired = 0;
         transferedEnabled = false;
         goToDefault();
+        isFiring = false;
+        previousallyIncreamtedBallsFired = false;
 
 
     }
@@ -89,6 +100,9 @@ public class Transfer extends Subsystem {
             protectorLeft.setPosition(protectorLeftPosition1);
             Intake.INSTANCE.intakeMotors.setPower(0);
             Outtake.INSTANCE.stopMotor().invoke();
+            ballsFired = 0;
+            isFiring = false;
+            previousallyIncreamtedBallsFired = false;
         });
     }
 
@@ -129,38 +143,76 @@ public class Transfer extends Subsystem {
     private boolean near(double a, double b) { return Math.abs(a-b) < POS_EPS; }
 
     public void updateWheelSpeedTick() {
-        if (!transferedEnabled) return;
+        // If transfer isn't enabled, reset all shot state and exit
+        if (!transferedEnabled) {
+            speedTimerRunning = false;
+            isFiring = false;
+            previousallyIncreamtedBallsFired = false;
+            shotLatched = false;
+            return;
+        }
 
+        // --- Flywheel atSpeed + "stable for X seconds" logic (unchanged conceptually) ---
         double v = Math.abs(Outtake.INSTANCE.getOuttakeGroupVelocity());
         double target = Outtake.motorVelocityTarget;
         boolean atSpeed = Math.abs(v - target) <= shooterVelocityTolerance;
 
-        boolean liftRetracted = near(liftRight.getPosition(), 0.5);
-        boolean liftFired     = near(liftLeft.getPosition(), liftLeftSpeed); // or check both L/R
+        // Start/reset timer when we FIRST reach atSpeed, and reset if we fall out of atSpeed
+        if (atSpeed) {
+            if (!speedTimerRunning) {
+                atSpeedTimer.reset();
+                speedTimerRunning = true;
+            }
+        } else {
+            speedTimerRunning = false;
+        }
 
-        // Decide whether we *should* be firing
-        if (atSpeed && liftRetracted && !isFiring) {
-            // start a firing stroke
+        boolean delayPassed = speedTimerRunning && atSpeedTimer.seconds() >= shootingDelaySeconds;
+
+        // "Retracted" is safe to check (it's your commanded resting position)
+        boolean liftRetracted = near(liftRight.getPosition(), 0.5) && near(liftLeft.getPosition(), 0.5);
+
+        // --- Re-arm logic ---
+        // Once we're NOT in the "ready-to-shoot" window anymore (delayPassed false),
+        // we allow another shot later (after the wheel recovers and delayPassed becomes true again).
+        if (!delayPassed && !isFiring) {
+            shotLatched = false;
+            previousallyIncreamtedBallsFired = false;
+        }
+
+        // --- Start shot (exactly once per "ready" window) ---
+        if (delayPassed && liftRetracted && !isFiring && !shotLatched) {
+            // Command the kick
             liftRight.setPosition(liftRightSpeed);
             liftLeft.setPosition(liftLeftSpeed);
             Intake.INSTANCE.intakeMotors.setPower(-1);
+
             isFiring = true;
+            // Don't increment here; wait for evidence the shot actually happened.
         }
 
-        // End of stroke → count exactly once, debounced
-        if (isFiring && liftFired) {
-            // retract (you can also delay here if needed)
+        // --- Detect shot completion WITHOUT servo position ---
+        // A real shot almost always causes a brief flywheel speed dip -> atSpeed becomes false.
+        // Use that dip as the "shot happened" event.
+        if (isFiring && !atSpeed) {
+            // Increment exactly once
+            if (!previousallyIncreamtedBallsFired) {
+                ballsFired += 1;
+                previousallyIncreamtedBallsFired = true;
+            }
+
+            // Retract
             liftRight.setPosition(0.5);
             liftLeft.setPosition(0.5);
             Intake.INSTANCE.intakeMotors.setPower(0);
 
-            if (shotTimer.seconds() >= MIN_SHOT_INTERVAL_S) {
-                ballsFired++;
-                shotTimer.reset();
-            }
             isFiring = false;
+
+            // Latch so we cannot re-fire again while delayPassed is still true (if it ever stays true)
+            shotLatched = true;
         }
     }
+
 
     public InstantCommand rotateUp() {
         return new InstantCommand(()-> {

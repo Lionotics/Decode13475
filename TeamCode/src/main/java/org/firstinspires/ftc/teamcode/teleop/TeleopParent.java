@@ -26,6 +26,8 @@ public class TeleopParent extends NextFTCOpMode {
     public final int BLUE_TAG_ID = 20;
     public final int RED_TAG_ID = 24;
 
+    private boolean autoScoreCancelled = false;
+
     public Command driverControlled;
 
     public TeleopParent() {
@@ -36,6 +38,8 @@ public class TeleopParent extends NextFTCOpMode {
 
     @Override
     public void onStartButtonPressed() {
+        autoScoreCancelled = false;
+
         FtcDashboard.getInstance().startCameraStream(Webcam.INSTANCE.getVisionPortal(), 30);
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -63,15 +67,18 @@ public class TeleopParent extends NextFTCOpMode {
         gp1.getDpadRight().setPressedCommand( ()->Outtake.INSTANCE.MotorVelocityToHigher() );
 
 
-        gp1.getA().setPressedCommand(() -> Outtake.INSTANCE.startMotor());
+        gp1.getA().setPressedCommand(() -> Outtake.INSTANCE.startMotor(Outtake.DISTANCE_OR_MOTOR_POWER.DISTANCE,getWebCamDistance() ));
 
 
         gp1.getB().setPressedCommand(
 
 
                 () ->
-                        Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING)
+                        new SequentialGroup(
+                                new InstantCommand( ()-> autoScoreCancelled = true ),
 
+                                Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING)
+                        )
         );
 
 
@@ -89,7 +96,12 @@ public class TeleopParent extends NextFTCOpMode {
 
 
 
-        gp1.getLeftBumper().setPressedCommand(() -> autoScore() );
+        gp1.getLeftBumper().setPressedCommand(
+
+                () -> new SequentialGroup(
+                        new InstantCommand( ()->autoScoreCancelled = false ),
+                        autoScore()
+                ) );
 
         gp1.getDpadUp().setHeldCommand( ()-> Outtake.INSTANCE.raiseMotorVelocity() );
         gp1.getDpadDown().setHeldCommand( ()-> Outtake.INSTANCE.lowerMotorVelocity() );
@@ -150,31 +162,17 @@ public class TeleopParent extends NextFTCOpMode {
 
                     @Override
                     public void start() {
-                        double webCamDistance;
-                        if (Webcam.INSTANCE.seesTag()) {
-                            webCamDistance = Webcam.INSTANCE.getRange();
-                        } else if (DriveTrain.haveTagEstimate && DriveTrain.INSTANCE.odometry != null) {
-                            // Make sure pose is fresh right now (not just onUpdate)
-                            DriveTrain.INSTANCE.odometry.update();
+                        Transfer.INSTANCE.ballsFired = 0;
+                        double webCamDistance = getWebCamDistance();
 
-                            Pose2D pose = DriveTrain.INSTANCE.odometry.getPosition();
-                            double rx = pose.getX(DistanceUnit.INCH);
-                            double ry = pose.getY(DistanceUnit.INCH);
 
-                            double dx = DriveTrain.blueTagX_in - rx;
-                            double dy = DriveTrain.blueTagY_in - ry;
-
-                            webCamDistance = Math.hypot(dx, dy); // inches
-                        } else {
-                            webCamDistance = 30.0; // last-resort fallback if you *never* saw the tag yet
-                        }
 
                        // double targetTempRaw = Outtake.INSTANCE.distanceToVelocity(webCamDistance);
 
                         afterFace = new SequentialGroup(
                                 Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.START_SHOOTING),
 
-                             new ForcedParallelCommand(Outtake.INSTANCE.startMotor())
+                             new ForcedParallelCommand(Outtake.INSTANCE.startMotor(Outtake.DISTANCE_OR_MOTOR_POWER.DISTANCE,getWebCamDistance()))
                         );
 
                         afterFace.invoke();
@@ -185,12 +183,17 @@ public class TeleopParent extends NextFTCOpMode {
 
                     @Override
                     public boolean isDone() {
-                        return afterFace != null &&  Transfer.INSTANCE.ballsFired >= 3;
+                        return (afterFace != null &&  Transfer.INSTANCE.ballsFired >= 3) || autoScoreCancelled;
                     }
 
                     @Override
                     public void stop(boolean interrupted) {
+                        if (autoScoreCancelled) {
+                            interrupted = true;
+                        }
+
                         if (interrupted) {
+                            Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING);
                             Outtake.INSTANCE.stopMotor().invoke();
                         }
                     }
@@ -198,6 +201,28 @@ public class TeleopParent extends NextFTCOpMode {
                 Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING) ,
                  new InstantCommand(() -> driverControlled.invoke())
         );
+    }
+
+    public  double getWebCamDistance() {
+        double webCamDistance;
+        if (Webcam.INSTANCE.seesTag()) {
+            webCamDistance = Webcam.INSTANCE.getRange();
+        } else if (DriveTrain.haveTagEstimate && DriveTrain.INSTANCE.odometry != null) {
+            // Make sure pose is fresh right now (not just onUpdate)
+            DriveTrain.INSTANCE.odometry.update();
+
+            Pose2D pose = DriveTrain.INSTANCE.odometry.getPosition();
+            double rx = pose.getX(DistanceUnit.INCH);
+            double ry = pose.getY(DistanceUnit.INCH);
+
+            double dx = DriveTrain.blueTagX_in - rx;
+            double dy = DriveTrain.blueTagY_in - ry;
+
+            webCamDistance = Math.hypot(dx, dy); // inches
+        } else {
+            webCamDistance = 30.0; // last-resort fallback if you *never* saw the tag yet
+        }
+        return  webCamDistance;
     }
 
 

@@ -3,13 +3,12 @@ package org.firstinspires.ftc.teamcode.hardware;
 import com.acmerobotics.dashboard.config.Config;
 import com.rowanmcalpin.nextftc.core.Subsystem;
 import com.rowanmcalpin.nextftc.core.command.Command;
-import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
+import com.rowanmcalpin.nextftc.core.command.groups.ParallelGroup;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
 import com.rowanmcalpin.nextftc.core.control.controllers.PIDFController;
 import com.rowanmcalpin.nextftc.ftc.hardware.controllables.MotorEx;
 
 
-import com.rowanmcalpin.nextftc.ftc.hardware.controllables.MotorGroup;
 import com.rowanmcalpin.nextftc.ftc.hardware.controllables.RunToVelocity;
 
 @Config
@@ -19,9 +18,14 @@ public class Outtake extends Subsystem {
 
     public  static double motorVelocityStep = 1;
 
-    public  static  double kP = 0.005;
-    public  static  double kI = 0.00;
-    public  static  double kD = 0.000;
+    public  static  double kPright = 0.01;
+    public  static  double kIright = 0.00;
+    public  static  double kDright = 0.000;
+
+
+    public  static  double kPleft = 0.01;
+    public  static  double kIleft = 0.00;
+    public  static  double kDleft = 0.000;
 
 
     public  static double motorVelocityTargetLower = 770;
@@ -31,14 +35,24 @@ public class Outtake extends Subsystem {
 
     public  static  boolean motorIsOnHigher = true;
 
+    public  enum  DISTANCE_OR_MOTOR_POWER {DISTANCE, MOTOR_POWER};
+
+    public double distanceToMotorVelocity(double distance) {
+        return  0.173 * distance * distance - 7.09 * distance + 807.56;
+    }
 
 
 
+    private final PIDFController leftController = new PIDFController(
+            kPleft,  // kP
+            kIleft,   // kI
+            kDleft    // kD
+    );
 
-    private final PIDFController outtakeVelocityController = new PIDFController(
-            kP,  // kP
-            kI,   // kI
-            kD    // kD
+    private final PIDFController rightContoller = new PIDFController(
+            kPright,  // kP
+            kIright,   // kI
+            kDright    // kD
     );
 
 
@@ -49,9 +63,10 @@ public class Outtake extends Subsystem {
     private MotorEx motorOuttakeRight;
     private MotorEx motorOuttakeLeft;
 
-    private  MotorGroup outtakeGroup;
 
-    public  static  double velocityAdder = 80;
+    public  static  double velocityAdderRightMotor = 40;
+
+    public  static  double velocityAdderLeftMotor = 40;
 
 
 
@@ -63,49 +78,54 @@ public class Outtake extends Subsystem {
         motorOuttakeLeft.reverse();
       //  motorOuttakeRight.reverse();
 
-        outtakeGroup = new MotorGroup(motorOuttakeLeft, motorOuttakeRight);
         motorIsOnHigher = true;
     }
 
-    public InstantCommand setPowerToMotorS(double i) {
-        return new InstantCommand(()-> {
-            //motorOuttakeRight.setPower(i*motorPower);
-            outtakeGroup.setPower(i*motorPower);
 
 
-        });
+    public double targetVelocityToActualVelocityRightMotor(double targetVelocity) {
+        return  -targetVelocity- velocityAdderRightMotor;
     }
 
-    public double targetVelocityToActualVelocity(double targetVelocity) {
-        return  -targetVelocity-velocityAdder;
-        //return  0.0418 * targetVelocity + 5;
+    public double targetVelocityToActualVelocityLeftMotor(double targetVelocity) {
+        return  -targetVelocity- velocityAdderLeftMotor;
     }
 
-    public Command startMotor() {
-        double targetTemp  = targetVelocityToActualVelocity(motorVelocityTarget); // ignore direction
+    public Command startMotor(DISTANCE_OR_MOTOR_POWER type, double value ) {
+        double targetTempRight;
+        double targetTempLeft;
+
+        if (type == DISTANCE_OR_MOTOR_POWER.MOTOR_POWER) {
+            motorVelocityTarget = value;
+            targetTempRight  = targetVelocityToActualVelocityRightMotor(value); // ignore direction
+            targetTempLeft  = targetVelocityToActualVelocityLeftMotor(value); // ignore direction
+        } else {
+            double velocityRaw  = distanceToMotorVelocity(value);
+            motorVelocityTarget = velocityRaw;
+            targetTempRight  = targetVelocityToActualVelocityRightMotor(velocityRaw); // ignore direction
+            targetTempLeft  = targetVelocityToActualVelocityLeftMotor(velocityRaw); // ignore direction
+
+        }
 
 
-        return new RunToVelocity(
-                outtakeGroup,
-                targetTemp,
-                outtakeVelocityController,
-                this
+
+
+        return new ParallelGroup(
+                new RunToVelocity(motorOuttakeRight,  targetTempRight, rightContoller),
+                new RunToVelocity(motorOuttakeLeft, targetTempLeft, leftController)
         );
+
+
 
     }
 
     public Command stopMotor() {
-     //   return new InstantCommand(() -> {
-       //     outtakeGroup.setPower(0);
-       // });
 
-       return  new RunToVelocity(
-                outtakeGroup,
-                0,
-                outtakeVelocityController,
-                this
 
-       );
+        return new ParallelGroup(
+                new RunToVelocity(motorOuttakeRight,  0, rightContoller),
+                new RunToVelocity(motorOuttakeLeft, 0, leftController)
+        );
     }
 
     public Command raiseMotorVelocity() {
@@ -150,7 +170,10 @@ public class Outtake extends Subsystem {
         return -motorOuttakeRight.getVelocity();
     }
 
-    public  double getOuttakeGroupVelocity() { return  outtakeGroup.getVelocity(); }
+    public  double getOuttakeGroupVelocity() {
+        return ( (getMotorCurrentLeftVelocity()+getMotorCurrentRightVelocity()) /2 );
+        //return  getMotorCurrentLeftVelocity();
+    }
 
 
 }
