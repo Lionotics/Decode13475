@@ -28,12 +28,14 @@ public class Webcam extends Subsystem {
     public static int[] GOAL_TAG_IDS    = new int[]{7, 8, 9, 10, 20, 24};
     public static int[] OBELISK_TAG_IDS = new int[]{21, 22, 23};
 
+    public  int soleTagID = 0;
+
     private static final String CAMERA_NAME = "Webcam";
 
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
-    private AprilTagDetection bestGoalDetection;
+    public AprilTagDetection bestGoalDetection;
     private AprilTagDetection bestObeliskDetection;
     private List<AprilTagDetection> lastDetections = new ArrayList<>();
 
@@ -83,13 +85,24 @@ public class Webcam extends Subsystem {
                 .build();
     }
 
+
     @Override
     public void periodic() {
         if (aprilTag == null) return;
 
         lastDetections = aprilTag.getDetections();
-        bestGoalDetection = pickBestByIdSet(lastDetections, GOAL_TAG_IDS);
-        bestObeliskDetection = pickBestByIdSet(lastDetections, OBELISK_TAG_IDS);
+
+        if (soleTagID != 0) {
+            bestGoalDetection = getDetectionById(soleTagID);
+            bestObeliskDetection = null;
+        } else {
+            bestGoalDetection = pickBestByIdSet(lastDetections, GOAL_TAG_IDS);
+            bestObeliskDetection = pickBestByIdSet(lastDetections, OBELISK_TAG_IDS);
+        }
+    }
+
+    public  void setSoleTagID(int GoalID) {
+        soleTagID = GoalID;
     }
 
     public VisionPortal getVisionPortal() {

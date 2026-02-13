@@ -3,13 +3,13 @@ package org.firstinspires.ftc.teamcode.teleop;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
+import org.firstinspires.ftc.teamcode.hardware.Webcam;
 
 @TeleOp(name = "13475BlueTeleop", group = "Teleop")
 public class BlueTeleop extends  TeleopParent{
     public BlueTeleop() {
         super();
         DriveTrain.INSTANCE.setGoalID(BLUE_TAG_ID);
-
     }
 
     @Override

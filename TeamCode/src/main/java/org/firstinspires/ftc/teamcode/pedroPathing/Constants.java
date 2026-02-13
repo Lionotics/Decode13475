@@ -41,9 +41,8 @@ public class Constants {
                     1, 0.0, 0.01, 0.0
             ))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.03, 0.0, 0.0, 0.0, 0.0
+                    0.1,0.0,0.01,0.6,0.0
             ))
-            .centripetalScaling(0.05)
             .forwardZeroPowerAcceleration(-18.76)
             .lateralZeroPowerAcceleration(-48.15);
 
@@ -56,16 +55,23 @@ public class Constants {
             .maxPower(1.0)
 
             // Motor names must match your RC config and DriveTrain.java
-            .leftFrontMotorName("frontLeft")
-            .leftRearMotorName("backLeft")
-            .rightFrontMotorName("frontRight")
-            .rightRearMotorName("backRight")
+           // .leftFrontMotorName("frontLeft")
+           // .leftRearMotorName("backLeft")
+           // .rightFrontMotorName("frontRight")
+           // .rightRearMotorName("backRight")
+
+             .leftFrontMotorName("backLeft")
+             .leftRearMotorName("frontLeft")
+             .rightFrontMotorName("backRight")
+             .rightRearMotorName("frontRight")
+
 
             // Directions must match how the robot actually drives
             .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            
 
             // Placeholders until you run the Forward/Lateral Velocity tuners
             .xVelocity(xVelocityRealValue)   // in/s, forward max velocity (tune later)
@@ -78,17 +84,17 @@ public class Constants {
     public static PinpointConstants localizerConstants = new PinpointConstants()
             // Pod offsets RELATIVE TO ROBOT CENTER (in inches).
             // Measure these and replace 0.0s later:
-            .forwardPodY(6.0)      // + = pod is in front of center, - = behind
-            .strafePodX(0.0)       // + = pod is to the left,  - = to the right
+            .forwardPodY(6.0)
+            .strafePodX(-6.0)
 
             // Units + hardware map name + encoder model
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("odometryForward")
-            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD)
 
             // Encoder directions (flip if your X/Y go the wrong way)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
     // ---------------- Path constraints (end-of-path tolerances) ----------------
     // Constructor signature in Pedro 2.0: (tValue, velocity, translational, heading)
@@ -96,7 +102,7 @@ public class Constants {
             0.99,   // tValue: how far along the curve (0–1) before it can end
             100.0,  // velocity constraint (in/s) for "done"
             1.0,    // translational error allowed (in)
-            1.0     // heading error allowed (rad)
+            Math.toRadians(10)     // heading error allowed (rad)
     );
 
 

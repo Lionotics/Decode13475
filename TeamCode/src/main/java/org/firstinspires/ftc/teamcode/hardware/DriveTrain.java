@@ -101,6 +101,7 @@ public class DriveTrain extends Subsystem {
         backRight = new MotorEx("frontRight");
 
 
+
         odometry = OpModeData.INSTANCE.getHardwareMap().get(GoBildaPinpointDriver.class, "odometryForward");
 
 
@@ -110,10 +111,13 @@ public class DriveTrain extends Subsystem {
         motors = new MotorEx[]{frontLeft, frontRight, backLeft, backRight};
 
         initIMU(OpModeData.INSTANCE.getHardwareMap());
+
+        Webcam.INSTANCE.setSoleTagID(GOAL_TAG_ID);
+
     }
 
     public void periodic() {
-        d = Webcam.INSTANCE.getDetectionById(GOAL_TAG_ID);
+        d = Webcam.INSTANCE.bestGoalDetection;
 
         // Always keep odometry-based estimate fresh when tag is visible
         if (d != null && d.ftcPose != null) {
