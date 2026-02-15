@@ -6,7 +6,6 @@ import com.rowanmcalpin.nextftc.core.Subsystem;
 import com.rowanmcalpin.nextftc.core.command.Command;
 import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
-import com.rowanmcalpin.nextftc.core.command.utility.NullCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.delays.Delay;
 import com.rowanmcalpin.nextftc.ftc.OpModeData;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -19,9 +18,16 @@ public class Transfer extends Subsystem {
     public Servo protectorRight;
     public Servo protectorLeft;
 
-    public  static double liftRightSpeed = 0.1;
 
-    public  static double liftLeftSpeed = 0.9;
+    public  static  double liftRightSpeedIntake = 0.4;
+
+    public  static  double liftLeftSpeedIntake = 0.6;
+
+
+
+    public  static double liftRightSpeedTransfer = 0.1;
+
+    public  static double liftLeftSpeedTransfer = 0.9;
 
     public  static double protectorRightPosition1 = 0.63;
     public  static double protectorRightPosition2 = 0.97;
@@ -31,9 +37,9 @@ public class Transfer extends Subsystem {
 
     public  static  double protectorDelaySeconds = 0.4;
 
-    public static double shooterVelocityTolerance = 30;   // ticks/sec,
+    public static double shooterVelocityTolerance = 40;   // ticks/sec,
 
-    public static  double shootingDelaySeconds = 1.25;
+    public static  double shootingDelaySeconds = 1.00;
 
 
     public static double rotatorStep = 0.01;
@@ -64,9 +70,6 @@ public class Transfer extends Subsystem {
     private boolean speedTimerRunning = false;
 
     private boolean shotLatched = false; // blocks repeat shots while delayPassed stays true
-
-
-
 
 
 
@@ -120,13 +123,17 @@ public class Transfer extends Subsystem {
 
             transferedEnabled = true;
             return new SequentialGroup(
+                    new InstantCommand(() -> Intake.INSTANCE.intakeMotors.setPower(0)),
                     new InstantCommand(() -> protectorRight.setPosition(protectorRightPosition2)),
                     new InstantCommand(() -> protectorLeft.setPosition(protectorLeftPosition2)),
 
+
+                    new InstantCommand( ()->Transfer.INSTANCE.liftLeft.setPosition(0.5)),
+                    new InstantCommand( ()->Transfer.INSTANCE.liftRight.setPosition(0.5)),
+
+
                     new Delay(protectorDelaySeconds)
 
-
-                    // I want to make the servos continousally move until manually instructed not to
 
             );
         } else {
@@ -183,8 +190,8 @@ public class Transfer extends Subsystem {
         // --- Start shot (exactly once per "ready" window) ---
         if (delayPassed && liftRetracted && !isFiring && !shotLatched) {
             // Command the kick
-            liftRight.setPosition(liftRightSpeed);
-            liftLeft.setPosition(liftLeftSpeed);
+            liftRight.setPosition(liftRightSpeedTransfer);
+            liftLeft.setPosition(liftLeftSpeedTransfer);
             Intake.INSTANCE.intakeMotors.setPower(-1);
 
             isFiring = true;

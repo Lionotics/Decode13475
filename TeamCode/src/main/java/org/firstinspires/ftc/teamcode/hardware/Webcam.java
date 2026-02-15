@@ -92,7 +92,7 @@ public class Webcam extends Subsystem {
 
         lastDetections = aprilTag.getDetections();
 
-        if (soleTagID != 0) {
+        if (soleTagID != 0  && false) {
             bestGoalDetection = getDetectionById(soleTagID);
             bestObeliskDetection = null;
         } else {

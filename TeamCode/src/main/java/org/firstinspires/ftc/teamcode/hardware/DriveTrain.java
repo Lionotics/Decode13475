@@ -50,7 +50,7 @@ public class DriveTrain extends Subsystem {
     public static double camOffsetY_in = 0.0;
 
     // How aggressively we trust new measurements (0..1). Higher = updates faster.
-    public static double tagEstimateAlpha = 0.25;
+   //public static double tagEstimateAlpha = 0.25;
 
     // Turning behavior when tag is NOT visible
     public static double kP_noTag = 0.05;     // power per degree
@@ -62,9 +62,10 @@ public class DriveTrain extends Subsystem {
     public static double maxTurn_inTag = 0.15;
     public static double minTurn_inTag = 0.2;
 
-    public static double searchPowerBeforeTag = 0.35;
+    public static double searchPowerBeforeTag = 0.25;
 
-
+    public volatile long lastTagEstimateMs = 0;
+    public static final long TAG_ESTIMATE_MAX_AGE_MS = 900; // tune: 500–1500ms works well
 
     public  boolean drivingFieldCentricNoTurnIsActivated = false;
 
@@ -73,7 +74,7 @@ public class DriveTrain extends Subsystem {
 
     // Tune these:
 
-    public static double desiredTilt = -4;
+    public static double desiredTilt = 1;
     public static double deadbandDeg = 2.0;
     public static long timeoutMs = 25000;
 
@@ -85,6 +86,8 @@ public class DriveTrain extends Subsystem {
     final double[] lastErrorDeg = new double[1];
 
     private AprilTagDetection d;
+
+    public  String TagStatus = "";
 
 
 
@@ -117,11 +120,18 @@ public class DriveTrain extends Subsystem {
     }
 
     public void periodic() {
-        d = Webcam.INSTANCE.bestGoalDetection;
+        d = Webcam.INSTANCE.getDetectionById(GOAL_TAG_ID);
 
         // Always keep odometry-based estimate fresh when tag is visible
         if (d != null && d.ftcPose != null) {
+            TagStatus = "Robot Sees Tag.";
             updateBlueTagEstimate(d);
+        }  else {
+            if (haveTagEstimate) {
+                TagStatus = "No, But Robot Has Goal Location Estimate";
+            } else {
+                TagStatus = "No, And Robot Doesn't Have Goal Location Estimate";
+            }
         }
     }
 
@@ -252,10 +262,11 @@ public class DriveTrain extends Subsystem {
             blueTagX_in = measTagX;
             blueTagY_in = measTagY;
             haveTagEstimate = true;
+            lastTagEstimateMs = System.currentTimeMillis();
         } else {
-            // EMA filter to smooth noise
-            blueTagX_in = (1 - tagEstimateAlpha) * blueTagX_in + tagEstimateAlpha * measTagX;
-            blueTagY_in = (1 - tagEstimateAlpha) * blueTagY_in + tagEstimateAlpha * measTagY;
+            blueTagX_in =  measTagX;
+            blueTagY_in = measTagY;
+            lastTagEstimateMs = System.currentTimeMillis();
         }
     }
 
@@ -298,6 +309,18 @@ public class DriveTrain extends Subsystem {
 
                 // Tag NOT visible: use odometry to "pre-aim" toward where we think the tag is
                 if (haveTagEstimate && odometry != null) {
+                    long age = System.currentTimeMillis() - lastTagEstimateMs;
+
+                    if (age > TAG_ESTIMATE_MAX_AGE_MS) {
+                        // estimate is stale → don't do a "random" turn
+                        // pick ONE behavior below:
+                        // A) stop aiming and end
+                        haveTagEstimate = false;
+                        // sawTag[0] stays false (so if you still gate on it, it’ll run until timeout)
+                        return;
+                    }
+
+
                     Pose2D pose = odometry.getPosition();
                     double rx = pose.getX(DistanceUnit.INCH);
                     double ry = pose.getY(DistanceUnit.INCH);

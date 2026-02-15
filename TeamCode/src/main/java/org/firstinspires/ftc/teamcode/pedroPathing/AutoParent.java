@@ -10,11 +10,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.rowanmcalpin.nextftc.pedro.PedroOpMode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Outtake;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
 import org.firstinspires.ftc.teamcode.hardware.Webcam;
+import org.firstinspires.ftc.teamcode.util.autoCommands;
 
 import com.rowanmcalpin.nextftc.core.command.Command;
 
@@ -57,7 +57,7 @@ public abstract class AutoParent extends PedroOpMode {
     protected Command scoreCmd = null;
 
     public AutoParent() {
-        super(Intake.INSTANCE, Outtake.INSTANCE, Transfer.INSTANCE, Webcam.INSTANCE, DriveTrain.INSTANCE);
+        super(Intake.INSTANCE, Outtake.INSTANCE, Transfer.INSTANCE, Webcam.INSTANCE);
     }
 
     /** Override if your auto starts somewhere else. */
@@ -134,11 +134,15 @@ public abstract class AutoParent extends PedroOpMode {
         panelsTelemetry.addData("X", follower.getPose().getX());
         panelsTelemetry.addData("Y", follower.getPose().getY());
         panelsTelemetry.addData("Heading (deg)", Math.toDegrees(follower.getPose().getHeading()));
-        panelsTelemetry.addData("Reached Case Two", reachedCaseTwo);
+        panelsTelemetry.addData("Webcam Distance", autoCommands.getWebCamDistance());
+        panelsTelemetry.addData("Outtake Target Velocity", Outtake.motorVelocityTarget);
+
+
 
         // Child telemetry
         addSubclassTelemetry();
 
         panelsTelemetry.update();
+
     }
 }

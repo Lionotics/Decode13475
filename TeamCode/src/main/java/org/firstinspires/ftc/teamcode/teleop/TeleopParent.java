@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.rowanmcalpin.nextftc.core.command.Command;
 import com.rowanmcalpin.nextftc.core.command.groups.SequentialGroup;
-import com.rowanmcalpin.nextftc.core.command.utility.ForcedParallelCommand;
 import com.rowanmcalpin.nextftc.core.command.utility.InstantCommand;
 import com.rowanmcalpin.nextftc.ftc.gamepad.GamepadEx;
 
@@ -14,7 +13,7 @@ import com.rowanmcalpin.nextftc.ftc.NextFTCOpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.commands.autoCommands;
+import org.firstinspires.ftc.teamcode.util.autoCommands;
 import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
 import org.firstinspires.ftc.teamcode.hardware.Intake;
 import org.firstinspires.ftc.teamcode.hardware.Outtake;
@@ -53,13 +52,48 @@ public class TeleopParent extends NextFTCOpMode {
 
         GamepadEx gp1 = gamepadManager.getGamepad1();
 
-        gp1.getX().setPressedCommand(() -> Intake.INSTANCE.eat());
+        gp1.getX().setPressedCommand(
+                () -> new SequentialGroup(
+                        Intake.INSTANCE.eat(),
 
-        gp1.getY().setPressedCommand(() -> Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.AUTO_MODE));
+                        new InstantCommand( ()->
+                        {
+                            if (Intake.INSTANCE.intakeMotors.getPower() != 0) {
+                                Transfer.INSTANCE.liftRight.setPosition(Transfer.liftRightSpeedIntake);
+                                Transfer.INSTANCE.liftLeft.setPosition(Transfer.liftLeftSpeedIntake);
+                            } else {
+                                Transfer.INSTANCE.liftLeft.setPosition(0.5);
+                                Transfer.INSTANCE.liftRight.setPosition(0.5);
+                            }
+                        }
+
+                                )
+                        )
+        );
+
+        gp1.getY().setPressedCommand(
+                () -> new SequentialGroup(
+                        new InstantCommand( ()->autoScoreCancelled = false ),
+                    //    DriveTrain.INSTANCE.faceBlueGoal,         // keep aiming here
+                        new InstantCommand(() -> driverControlled.invoke()),
+
+                        autoCommands.autoScoreCore(),
+                        Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING)//,
+
+                        // autoCommands.autoScore(),
+
+                )
+
+        );
 
 
 
-        gp1.getRightBumper().setPressedCommand(() -> Intake.INSTANCE.spit());
+        gp1.getRightBumper().setPressedCommand(
+                () -> new SequentialGroup( Intake.INSTANCE.spit(),
+                        new InstantCommand( ()->Transfer.INSTANCE.liftLeft.setPosition(0.5)),
+                        new InstantCommand( ()->Transfer.INSTANCE.liftRight.setPosition(0.5))
+                )
+        );
 
 
 
@@ -82,27 +116,17 @@ public class TeleopParent extends NextFTCOpMode {
                         )
         );
 
-
-       /* gp1.getRightTrigger().setPressedCommand(value -> {
-            // value is the analog trigger value (0.0–1.0); you can ignore it
-            Outtake.INSTANCE.startMotor();   // side effect
-            return new NullCommand();        // schedules a do-nothing command
-        });
-
-        gp1.getLeftTrigger().setPressedCommand(value -> {
-            // value is the analog trigger value (0.0–1.0); you can ignore it
-            Outtake.INSTANCE.stopMotor();   // side effect
-            return new NullCommand();        // schedules a do-nothing command
-        }); */
-
-
-
         gp1.getLeftBumper().setPressedCommand(
 
                 () -> new SequentialGroup(
                         new InstantCommand( ()->autoScoreCancelled = false ),
-                        autoCommands.autoScore(),
-                        new InstantCommand(() -> driverControlled.invoke())
+                        DriveTrain.INSTANCE.faceBlueGoal,         // keep aiming here
+                        new InstantCommand(() -> driverControlled.invoke()),
+
+                        autoCommands.autoScoreCore(),
+                        Transfer.INSTANCE.transferBall(Transfer.TRANSFER_MODE.STOP_SHOOTING)//,
+
+                       // autoCommands.autoScore(),
 
                 ) );
 
@@ -138,7 +162,12 @@ public class TeleopParent extends NextFTCOpMode {
             telemetry.addData("Odo Heading (deg)", headingDeg);
         }
 
+        telemetry.addData("Robot Sees Tag? ", DriveTrain.INSTANCE.TagStatus);
+
+
         Webcam.INSTANCE.addTelemetry(telemetry);
+
+
 
 
         telemetry.update();

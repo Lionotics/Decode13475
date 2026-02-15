@@ -7,8 +7,7 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.commands.autoCommands;
-import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
+import org.firstinspires.ftc.teamcode.util.autoCommands;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
 
 
@@ -23,7 +22,7 @@ public class BlueTouchingWall extends AutoParent{
 
     @Override
     public  void onInit() {
-        DriveTrain.INSTANCE.setGoalID(BLUE_TAG_ID);
+        super.onInit();
     }
 
     @Override
@@ -37,17 +36,17 @@ public class BlueTouchingWall extends AutoParent{
         pathToWall = follower.pathBuilder()
                 .addPath(new BezierLine(
                         new Pose(56.000, 8.000),
-                        new Pose(55, 85)
+                        new Pose(35, 111)
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(90))
                 .build();
 
         pathBack = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(56, 85),
-                        new Pose(56, 10)
+                        new Pose(35, 111),
+                        new Pose(56, 30)
                 ))
-                .setConstantHeadingInterpolation(Math.toRadians(90))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
     }
 
@@ -91,7 +90,7 @@ public class BlueTouchingWall extends AutoParent{
 
             case 3:
                 if (scoreCmd != null && scoreCmd.isDone()) {
-                    follower.turnTo(Math.toRadians(90));
+                    follower.turnTo(Math.toRadians(180));
                     scoreCmd = null;
                     turnStartMs = System.currentTimeMillis();
                     pathState = 4;

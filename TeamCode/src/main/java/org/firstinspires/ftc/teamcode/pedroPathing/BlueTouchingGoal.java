@@ -6,9 +6,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.commands.autoCommands;
-import org.firstinspires.ftc.teamcode.hardware.DriveTrain;
+import org.firstinspires.ftc.teamcode.util.autoCommands;
 import org.firstinspires.ftc.teamcode.hardware.Transfer;
 
 
@@ -23,12 +21,12 @@ public class BlueTouchingGoal extends AutoParent{
 
     @Override
     public  void onInit() {
-        DriveTrain.INSTANCE.setGoalID(BLUE_TAG_ID);
+        super.onInit();
     }
 
     @Override
     protected Pose getStartPose() {
-        return new Pose(24, 131, Math.toRadians(angleToFaceGoal));
+        return new Pose(21, 123, Math.toRadians(angleToFaceGoal));
     }
 
     @Override
@@ -36,18 +34,18 @@ public class BlueTouchingGoal extends AutoParent{
         // Your existing Path1/Path2 logic moved here
         pathToWall = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(24, 131),
-                        new Pose(56, 85)
+                        new Pose(20, 121),
+                        new Pose(35, 111)
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(angleToFaceGoal), Math.toRadians(angleToFaceGoal))
                 .build();
 
         pathBack = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        new Pose(56, 85),
-                        new Pose(56, 135)
+                        new Pose(35, 111),
+                        new Pose(45, 65)
                 ))
-                .setConstantHeadingInterpolation(Math.toRadians(270))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
     }
 
@@ -74,7 +72,7 @@ public class BlueTouchingGoal extends AutoParent{
 
             case 3:
                 if (scoreCmd != null && scoreCmd.isDone()) {
-                    follower.turnTo(Math.toRadians(270));
+                    follower.turnTo(Math.toRadians(180));
                     scoreCmd = null;
                     turnStartMs = System.currentTimeMillis();
                     pathState = 4;

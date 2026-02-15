@@ -27,6 +27,8 @@ public class Outtake extends Subsystem {
     public  static  double kIleft = 0.00;
     public  static  double kDleft = 0.000;
 
+    public  static double cInDistanceCalculation = 626;
+
 
     public  static double motorVelocityTargetLower = 770;
     public  static double motorVelocityTargetHigher = 875;
@@ -37,8 +39,8 @@ public class Outtake extends Subsystem {
 
     public  enum  DISTANCE_OR_MOTOR_POWER {DISTANCE, MOTOR_POWER};
 
-    public double distanceToMotorVelocity(double distance) {
-        return  0.173 * distance * distance - 7.09 * distance + 807.56;
+    public double distanceToMotorVelocity(double x) {
+        return  4.41348 * x + cInDistanceCalculation;
     }
 
 
